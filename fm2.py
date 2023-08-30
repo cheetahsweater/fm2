@@ -1,6 +1,6 @@
 import os
+import json
 path = os.getcwd()
-
 filelist = os.listdir()
 
 def tobool(value):
@@ -24,8 +24,8 @@ def controls(value):
     return newValue
      
 
-def readfm2(file):
-    with open(f"{path}\\{file}","r") as file:
+def readfm2(filename):
+    with open(f"{path}\\{filename}","r") as file:
         lines = []
         text = file.readlines()
         for line in text:
@@ -66,8 +66,42 @@ def readfm2(file):
         fm2.update({"port0": lines[9].removeprefix("port0 ")})
         fm2["port0"] = controls(fm2["port0"])
 
-        #print(lines[9])
-        print(fm2)
+        #Indicates controller used in port 1 (see function "controls" for more details)
+        fm2.update({"port1": lines[10].removeprefix("port1 ")})
+        fm2["port1"] = controls(fm2["port1"])
+
+        #Indicates type of FCExp port attached, only supported value is 0
+        fm2.update({"port2": lines[11].removeprefix("port2 ")})
+
+        #Whether or not movie was recorded for a Famicom Disk System game
+        fm2.update({"FDS": lines[12].removeprefix("FDS ")})
+        fm2["FDS"] = tobool(fm2["FDS"])
+
+        #Whether or not movie uses NewPPU 
+        #(FCEUX 2.1.2 onwards have this option, but according to their site it is slower so unlikely)
+        fm2.update({"NewPPU": lines[13].removeprefix("NewPPU ")})
+        fm2["NewPPU"] = tobool(fm2["NewPPU"])
+
+        #Whether or not movie uses RAM initialization
+        fm2.update({"RAMInitOption": lines[14].removeprefix("RAMInitOption ")})
+        fm2["RAMInitOption"] = tobool(fm2["RAMInitOption"])
+
+        #Seed for RAM initialization
+        fm2.update({"RAMInitSeed": lines[15].removeprefix("RAMInitSeed ")})
+
+        line17 = lines[16]
+
+        if line17[:10] == "savestate ":
+            fm2.update({"savestate": lines[16].removeprefix("savestate ")})
+        else:
+            pass
+        
+        movelist = lines[17:]
+        rawfilename = filename.removesuffix(".fm2")
+        with open(f"{path}\\{rawfilename}_info.json","w") as file:
+            myjson = json.dumps(fm2)
+            file.write(myjson)
+            print(f"{rawfilename}_info.json written.")
 
 readfm2("duma.fm2")
 readfm2("Somari.fm2")
