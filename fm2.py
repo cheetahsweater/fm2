@@ -1,7 +1,7 @@
 import os
 import json
 path = os.getcwd()
-filelist = os.listdir()
+filelist = os.listdir(f"{path}\\fm2")
 
 def tobool(value):
     if int(value) == 0:
@@ -25,84 +25,116 @@ def controls(value):
      
 
 def readfm2(filename):
-    with open(f"{path}\\{filename}","r") as file:
+    with open(f"{path}\\fm2\\{filename}","r") as file:
         lines = []
         text = file.readlines()
         for line in text:
             lines.append(line.removesuffix("\n"))
         fm2 = dict()
+        movelist = []
         #Version of the movie - ALWAYS 3
-        fm2.update({"version": lines[0].strip("version ")})
+        for line in lines:
+            if line[:7] == "version":    
+                fm2.update({"version": line.strip("version ")})
 
-        #Emulator version used to record movie
-        fm2.update({"emulatorVersion": lines[1].removeprefix("emuVersion ")})
+            #Emulator version used to record movie
+            if line[:10] == "emuVersion":
+                fm2.update({"emulatorVersion": line.removeprefix("emuVersion ")})
 
-        #Rerecord count (self-explanatory)
-        fm2.update({"rerecordCount": lines[2].removeprefix("rerecordCount ")}) 
+            #Rerecord count (self-explanatory)
+            if line[:13] == "rerecordCount":
+                fm2.update({"rerecordCount": line.removeprefix("rerecordCount ")}) 
 
-        #Whether or not the movie uses PAL timing (boolean)
-        fm2.update({"palFlag": lines[3].removeprefix("palFlag ")}) 
-        fm2["palFlag"] = tobool(fm2["palFlag"])
+            #Whether or not the movie uses PAL timing (boolean)
+            if line[:7] == "palFlag":
+                fm2.update({"palFlag": line.removeprefix("palFlag ")}) 
+                fm2["palFlag"] = tobool(fm2["palFlag"])
 
-        #Filename of ROM being played
-        fm2.update({"romFilename": lines[4].removeprefix("romFilename ")})
+            #Filename of ROM being played
+            if line[:11] == "romFilename":
+                fm2.update({"romFilename": line.removeprefix("romFilename ")})
 
-        #The base64 of the hexified MD5 hash of the ROM which was used to record the movie (I don't know)
-        fm2.update({"romChecksum": lines[5].removeprefix("romChecksum ")})
+            #The base64 of the hexified MD5 hash of the ROM which was used to record the movie (I don't know)
+            if line[:11] == "romChecksum":
+                fm2.update({"romChecksum": line.removeprefix("romChecksum ")})
 
-        #Movie ID used for loading savestates, not necessarily relevant here but good to have
-        fm2.update({"guid": lines[6].removeprefix("guid ")})
+            #Movie ID used for loading savestates, not necessarily relevant here but good to have
+            if line[:4] == "guid":
+                fm2.update({"guid": line.removeprefix("guid ")})
 
-        #Whether or not a fourscore was used (boolean)
-        fm2.update({"fourscore": lines[7].removeprefix("fourscore ")})
-        fm2["fourscore"] = tobool(fm2["fourscore"])
+            #Whether or not a fourscore was used (boolean)
+            if line[:9] == "fourscore":
+                fm2.update({"fourscore": line.removeprefix("fourscore ")})
+                fm2["fourscore"] = tobool(fm2["fourscore"])
 
-        #Whether or not a microphone was used (boolean)
-        #Note: This line is not covered in the FCEUX documentation so I assume it is obsolete, but including anyway
-        fm2.update({"microphone": lines[8].removeprefix("microphone ")})
-        fm2["microphone"] = tobool(fm2["microphone"])
+            #Whether or not a microphone was used (boolean)
+            #Note: This line is not covered in the FCEUX documentation so I assume it is obsolete, but including anyway
+            if line[:10] == "microphone":
+                fm2.update({"microphone": line.removeprefix("microphone ")})
+                fm2["microphone"] = tobool(fm2["microphone"])
 
-        #Indicates controller used in port 0 (see function "controls" for more details)
-        fm2.update({"port0": lines[9].removeprefix("port0 ")})
-        fm2["port0"] = controls(fm2["port0"])
+            #Indicates controller used in port 0 (see function "controls" for more details)
+            if line[:5] == "port0":
+                fm2.update({"port0": line.removeprefix("port0 ")})
+                fm2["port0"] = controls(fm2["port0"])
 
-        #Indicates controller used in port 1 (see function "controls" for more details)
-        fm2.update({"port1": lines[10].removeprefix("port1 ")})
-        fm2["port1"] = controls(fm2["port1"])
+            #Indicates controller used in port 1 (see function "controls" for more details)
+            if line[:5] == "port1":
+                fm2.update({"port1": line.removeprefix("port1 ")})
+                fm2["port1"] = controls(fm2["port1"])
 
-        #Indicates type of FCExp port attached, only supported value is 0
-        fm2.update({"port2": lines[11].removeprefix("port2 ")})
+            #Indicates type of FCExp port attached, only supported value is 0
+            if line[:5] == "port2":
+                fm2.update({"port2": line.removeprefix("port2 ")})
 
-        #Whether or not movie was recorded for a Famicom Disk System game
-        fm2.update({"FDS": lines[12].removeprefix("FDS ")})
-        fm2["FDS"] = tobool(fm2["FDS"])
+            #Whether or not movie was recorded for a Famicom Disk System game
+            if line[:3] == "FDS":
+                fm2.update({"FDS": line.removeprefix("FDS ")})
+                fm2["FDS"] = tobool(fm2["FDS"])
 
-        #Whether or not movie uses NewPPU 
-        #(FCEUX 2.1.2 onwards have this option, but according to their site it is slower so unlikely)
-        fm2.update({"NewPPU": lines[13].removeprefix("NewPPU ")})
-        fm2["NewPPU"] = tobool(fm2["NewPPU"])
+            #Whether or not movie uses NewPPU 
+            #(FCEUX 2.1.2 onwards have this option, but according to their site it is slower so unlikely)
+            if line[:6] == "NewPPU":
+                fm2.update({"NewPPU": line.removeprefix("NewPPU ")})
+                fm2["NewPPU"] = tobool(fm2["NewPPU"])
 
-        #Whether or not movie uses RAM initialization
-        fm2.update({"RAMInitOption": lines[14].removeprefix("RAMInitOption ")})
-        fm2["RAMInitOption"] = tobool(fm2["RAMInitOption"])
+            #Whether or not movie uses RAM initialization
+            if line[:13] == "RAMInitOption":
+                fm2.update({"RAMInitOption": line.removeprefix("RAMInitOption ")})
+                fm2["RAMInitOption"] = tobool(fm2["RAMInitOption"])
 
-        #Seed for RAM initialization
-        fm2.update({"RAMInitSeed": lines[15].removeprefix("RAMInitSeed ")})
+            #Seed for RAM initialization
+            if line[:11] == "RAMInitSeed":
+                fm2.update({"RAMInitSeed": line.removeprefix("RAMInitSeed ")})
 
-        line17 = lines[16]
+            if line[:10] == "savestate ":
+                fm2.update({"savestate": line.removeprefix("savestate ")})
 
-        if line17[:10] == "savestate ":
-            fm2.update({"savestate": lines[16].removeprefix("savestate ")})
-        else:
-            pass
-        
-        movelist = lines[17:]
+            if line[:6] == "binary":
+                fm2.update({"binary": line.removeprefix("binary ")})
+                fm2["binary"] = tobool(fm2["binary"])
+            
+            if line[:6] == "length":
+                fm2.update({"length": line.removeprefix("length ")})
+                fm2["length"] = tobool(fm2["length"])
+            
+            if line[:7] == "comment":
+                fm2.update({"comment": line.removeprefix("comment ")})
+            
+            if line[:8] == "subtitle":
+                fm2.update({"subtitle": line.removeprefix("subtitle ")})
+
+            else:
+                movelist.append(line)
+        print(len(movelist))
+        print(movelist[-310:-300])
         rawfilename = filename.removesuffix(".fm2")
         with open(f"{path}\\{rawfilename}_info.json","w") as file:
             myjson = json.dumps(fm2)
             file.write(myjson)
             print(f"{rawfilename}_info.json written.")
+        
 
-readfm2("duma.fm2")
-readfm2("Somari.fm2")
-readfm2("7-in-1.fm2")
+for file in filelist:
+    if file[-4:] == ".fm2":
+        readfm2(file)
